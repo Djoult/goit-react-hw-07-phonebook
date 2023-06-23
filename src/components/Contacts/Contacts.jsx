@@ -8,16 +8,24 @@ import {
   SpanNumber,
   ButtonDlt,
 } from './Contacts.styled';
-import { useDispatch, useSelector } from 'react-redux';
-import { removeContact } from 'redux/contactsSlice';
-import { getContacts, getFilter } from 'redux/selectors';
+import {
+  useGetContactsQuery,
+  useDeleteContactMutation,
+} from '../../redux/contactsSlice.js';
+import { useSelector } from 'react-redux';
+import { selectFilter } from 'redux/selectors';
 
 export const Contacts = () => {
-  const contacts = useSelector(getContacts);
-  const filter = useSelector(getFilter);
-  const dispatch = useDispatch();
+  const deleteContactId = id => {
+    deleteContact(id);
+  };
 
-  const getVisibleContacts = (() => {
+  const { data: contacts = [], isLoading, error } = useGetContactsQuery();
+  const [deleteContact] = useDeleteContactMutation();
+
+  const filter = useSelector(selectFilter);
+
+  const visibleContacts = (() => {
     return contacts
       .filter(
         contact =>
@@ -28,29 +36,31 @@ export const Contacts = () => {
         firstContact.name.localeCompare(secondContact.name)
       );
   })();
+
   return (
-    <UlList>
-      {getVisibleContacts.map(({ id, name, number }) => {
-        return (
-          <LiItem key={id}>
-            <SpanIcon
-              inputColor={`#${Math.floor(Math.random() * 16777215).toString(
-                16
-              )}`}
-            >
-              <RxAvatar />
-            </SpanIcon>
-            <SpanName>{name}</SpanName>
-            <SpanNumber>{number}</SpanNumber>
-            <ButtonDlt
-              type="button"
-              onClick={() => dispatch(removeContact(id))}
-            >
-              <RiDeleteBin6Line />
-            </ButtonDlt>
-          </LiItem>
-        );
-      })}
-    </UlList>
+    <>
+      {isLoading && <p>Loading...</p>}
+      {error && <p>{error}</p>}
+      <UlList>
+        {visibleContacts.map(({ id, name, number }) => {
+          return (
+            <LiItem key={id}>
+              <SpanIcon
+                inputColor={`#${Math.floor(Math.random() * 16777215).toString(
+                  16
+                )}`}
+              >
+                <RxAvatar />
+              </SpanIcon>
+              <SpanName>{name}</SpanName>
+              <SpanNumber>{number}</SpanNumber>
+              <ButtonDlt type="button" onClick={() => deleteContactId(id)}>
+                <RiDeleteBin6Line />
+              </ButtonDlt>
+            </LiItem>
+          );
+        })}
+      </UlList>
+    </>
   );
 };
